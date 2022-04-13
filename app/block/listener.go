@@ -18,7 +18,7 @@ import (
 // SubscribeToNewBlocks - Listen for event when new block header is
 // available, then fetch block content ( including all transactions )
 // in different worker
-func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, status *d.StatusHolder, redis *d.RedisInfo, queue *q.BlockProcessorQueue) {
+func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, status *d.StatusHolder, kafkaInfo *d.KafkaInfo, queue *q.BlockProcessorQueue) {
 	headerChan := make(chan *types.Header)
 
 	subs, err := connection.Websocket.SubscribeNewHead(context.Background(), headerChan)
@@ -92,8 +92,8 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 
 				// Starting go routine for fetching blocks `ette` failed to process in previous attempt
 				//
-				// Uses Redis backed queue for fetching pending block hash & retries
-				go RetryQueueManager(connection.RPC, _db, redis, queue, status)
+				// Uses Kafka backed queue for fetching pending block hash & retries
+				go RetryQueueManager(connection.RPC, _db, kafkaInfo, queue, status)
 
 				// If historical data query features are enabled
 				// only then we need to sync to latest state of block chain
@@ -119,7 +119,7 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 						to = status.MaxBlockNumberAtStartUp() - cfg.GetBlockConfirmations()
 					}
 
-					go SyncBlocksByRange(connection.RPC, _db, redis, queue, from, to, status)
+					go SyncBlocksByRange(connection.RPC, _db, kafkaInfo, queue, from, to, status)
 
 				}
 				// Making sure that when next latest block header is received, it'll not
@@ -160,7 +160,7 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 
 							wp.Submit(func() {
 
-								if !FetchBlockByNumber(connection.RPC, _oldestBlock, _db, redis, false, queue, status) {
+								if !FetchBlockByNumber(connection.RPC, _oldestBlock, _db, kafkaInfo, false, queue, status) {
 
 									_queue.ConfirmedFailed(_oldestBlock)
 									return
@@ -183,7 +183,7 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 						return
 					}
 
-					if !FetchBlockByHash(connection.RPC, blockHash, fmt.Sprintf("%d", blockNumber), _db, redis, queue, status) {
+					if !FetchBlockByHash(connection.RPC, blockHash, fmt.Sprintf("%d", blockNumber), _db, kafkaInfo, queue, status) {
 
 						_queue.UnconfirmedFailed(blockNumber)
 						return

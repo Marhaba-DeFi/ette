@@ -2,15 +2,15 @@ package block
 
 import (
 	"context"
+	"github.com/segmentio/kafka-go"
 	"log"
 
 	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
 )
 
-// PublishEvents - Iterate over all events & try to publish them on
-// redis pubsub channel
-func PublishEvents(blockNumber uint64, events []*db.Events, redis *d.RedisInfo) bool {
+// PublishEvents - Iterate over all events & try to publish them on kafka
+func PublishEvents(events []*db.Events, kafkaInfo *d.KafkaInfo) bool {
 
 	if events == nil {
 		return false
@@ -20,7 +20,7 @@ func PublishEvents(blockNumber uint64, events []*db.Events, redis *d.RedisInfo) 
 
 	for _, e := range events {
 
-		status = PublishEvent(blockNumber, e, redis)
+		status = PublishEvent(e, kafkaInfo)
 		if !status {
 			break
 		}
@@ -31,10 +31,10 @@ func PublishEvents(blockNumber uint64, events []*db.Events, redis *d.RedisInfo) 
 
 }
 
-// PublishEvent - Publishing event/ log entry to redis pub-sub topic, to be captured by subscribers
+// PublishEvent - Publishing event/ log entry to kafka topic, to be captured by subscribers
 // and sent to client application, who are interested in this piece of data
 // after applying filter
-func PublishEvent(blockNumber uint64, event *db.Events, redis *d.RedisInfo) bool {
+func PublishEvent(event *db.Events, kafkaInfo *d.KafkaInfo) bool {
 
 	if event == nil {
 		return false
@@ -49,9 +49,24 @@ func PublishEvent(blockNumber uint64, event *db.Events, redis *d.RedisInfo) bool
 		BlockHash:       event.BlockHash,
 	}
 
-	if err := redis.Client.Publish(context.Background(), redis.EventPublishTopic, data).Err(); err != nil {
+	// Marshall tx data
+	eventBinary, eventMarshallErr := data.MarshalBinary()
+	if eventMarshallErr != nil {
+		log.Println("Error marshalling Event Data: ", eventMarshallErr.Error())
+		return false
+	}
 
-		log.Printf("❗️ Failed to publish event from block %d : %s\n", blockNumber, err.Error())
+	// Publish tx to Kafka
+	kafkaWriteErr := kafkaInfo.KafkaWriter.WriteMessages(context.Background(),
+		kafka.Message{
+			Topic: "new-event",
+			Key:   []byte(data.TransactionHash),
+			Value: eventBinary,
+		},
+	)
+	if kafkaWriteErr != nil {
+
+		log.Printf("❗️ Failed to publish event data from TX hash %d : %s\n", data.TransactionHash, kafkaWriteErr.Error())
 		return false
 
 	}

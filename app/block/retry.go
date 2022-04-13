@@ -13,13 +13,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// RetryQueueManager - Pop oldest block number from Redis backed retry
+// RetryQueueManager - Pop oldest block number from Kafka backed retry
 // queue & try to fetch it in different go routine
 //
 // Sleeps for 1000 milliseconds
 //
 // Keeps repeating
-func RetryQueueManager(client *ethclient.Client, _db *gorm.DB, redis *d.RedisInfo, queue *q.BlockProcessorQueue, status *d.StatusHolder) {
+func RetryQueueManager(client *ethclient.Client, _db *gorm.DB, _kafkaInfo *d.KafkaInfo, queue *q.BlockProcessorQueue, status *d.StatusHolder) {
 	sleep := func() {
 		time.Sleep(time.Duration(512) * time.Millisecond)
 	}
@@ -48,7 +48,7 @@ func RetryQueueManager(client *ethclient.Client, _db *gorm.DB, redis *d.RedisInf
 
 			wp.Submit(func() {
 
-				if !FetchBlockByNumber(client, _blockNumber, _db, redis, true, queue, status) {
+				if !FetchBlockByNumber(client, _blockNumber, _db, _kafkaInfo, true, queue, status) {
 
 					queue.UnconfirmedFailed(_blockNumber)
 					return

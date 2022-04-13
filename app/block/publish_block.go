@@ -2,14 +2,15 @@ package block
 
 import (
 	"context"
+	"github.com/segmentio/kafka-go"
 	"log"
 
 	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
 )
 
-// PublishBlock - Attempts to publish block data to Redis pubsub channel
-func PublishBlock(block *db.PackedBlock, redis *d.RedisInfo) bool {
+// PublishBlock - Attempts to publish block data to Kafka pubsub channel
+func PublishBlock(block *db.PackedBlock, kafkaInfo *d.KafkaInfo) bool {
 
 	if block == nil {
 		return false
@@ -33,15 +34,30 @@ func PublishBlock(block *db.PackedBlock, redis *d.RedisInfo) bool {
 		ExtraData:           block.Block.ExtraData,
 	}
 
-	if err := redis.Client.Publish(context.Background(), redis.BlockPublishTopic, _block).Err(); err != nil {
+	// Marshall block data
+	byteBlock, marshallErr := _block.MarshalBinary()
+	if marshallErr != nil {
+		log.Println("Error marshalling block: ", marshallErr.Error())
+		return false
+	}
 
-		log.Printf("❗️ Failed to publish block %d : %s\n", block.Block.Number, err.Error())
+	kafkaWriteErr := kafkaInfo.KafkaWriter.WriteMessages(context.Background(),
+		kafka.Message{
+			Topic: "new-block",
+			Key:   []byte("new-block"),
+			Value: byteBlock,
+		},
+	)
+
+	if kafkaWriteErr != nil {
+
+		log.Printf("❗️ Failed to publish block %d : %s\n", block.Block.Number, kafkaWriteErr.Error())
 		return false
 
 	}
 
 	log.Printf("📎 Published block %d\n", block.Block.Number)
 
-	return PublishTxs(block.Block.Number, block.Transactions, redis)
+	return PublishTxs(block.Block.Number, block.Transactions, kafkaInfo)
 
 }

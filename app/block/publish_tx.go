@@ -2,15 +2,15 @@ package block
 
 import (
 	"context"
+	"github.com/segmentio/kafka-go"
 	"log"
 
 	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
 )
 
-// PublishTxs - Publishes all transactions in a block to redis pubsub
-// channel
-func PublishTxs(blockNumber uint64, txs []*db.PackedTransaction, redis *d.RedisInfo) bool {
+// PublishTxs - Publishes all transactions in a block to kafka
+func PublishTxs(blockNumber uint64, txs []*db.PackedTransaction, kafkaInfo *d.KafkaInfo) bool {
 
 	if txs == nil {
 		return false
@@ -21,7 +21,7 @@ func PublishTxs(blockNumber uint64, txs []*db.PackedTransaction, redis *d.RedisI
 
 	for _, t := range txs {
 
-		status = PublishTx(blockNumber, t, redis)
+		status = PublishTx(t, kafkaInfo)
 		if !status {
 			break
 		}
@@ -42,9 +42,8 @@ func PublishTxs(blockNumber uint64, txs []*db.PackedTransaction, redis *d.RedisI
 
 }
 
-// PublishTx - Publishes tx & events in tx, related data to respective
-// Redis pubsub channel
-func PublishTx(blockNumber uint64, tx *db.PackedTransaction, redis *d.RedisInfo) bool {
+// PublishTx - Publishes tx & events in tx, related data to Kafka
+func PublishTx(tx *db.PackedTransaction, kafkaInfo *d.KafkaInfo) bool {
 
 	if tx == nil {
 		return false
@@ -84,13 +83,28 @@ func PublishTx(blockNumber uint64, tx *db.PackedTransaction, redis *d.RedisInfo)
 		}
 	}
 
-	if err := redis.Client.Publish(context.Background(), redis.TxPublishTopic, pTx).Err(); err != nil {
+	// Marshall tx data
+	ptxBinary, txMarshallErr := pTx.MarshalBinary()
+	if txMarshallErr != nil {
+		log.Println("Error marshalling TX Data: ", txMarshallErr.Error())
+		return false
+	}
 
-		log.Printf("❗️ Failed to publish transaction from block %d : %s\n", blockNumber, err.Error())
+	// Publish tx to Kafka
+	kafkaWriteErr := kafkaInfo.KafkaWriter.WriteMessages(context.Background(),
+		kafka.Message{
+			Topic: "new-tx",
+			Key:   []byte(pTx.Hash),
+			Value: ptxBinary,
+		},
+	)
+	if kafkaWriteErr != nil {
+
+		log.Printf("❗️ Failed to publish TX data from Hash %d : %s\n", pTx.Hash, kafkaWriteErr.Error())
 		return false
 
 	}
 
-	return PublishEvents(blockNumber, tx.Events, redis)
+	return PublishEvents(tx.Events, kafkaInfo)
 
 }

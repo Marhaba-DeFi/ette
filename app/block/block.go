@@ -16,10 +16,10 @@ import (
 )
 
 // ProcessBlockContent - Processes everything inside this block i.e. block data, tx data, event data
-func ProcessBlockContent(client *ethclient.Client, block *types.Block, _db *gorm.DB, redis *d.RedisInfo, publishable bool, queue *q.BlockProcessorQueue, status *d.StatusHolder, startingAt time.Time) bool {
+func ProcessBlockContent(client *ethclient.Client, block *types.Block, _db *gorm.DB, kafkaInfo *d.KafkaInfo, publishable bool, queue *q.BlockProcessorQueue, status *d.StatusHolder, startingAt time.Time) bool {
 
 	// Closure managing publishing whole block data i.e. block header, txn(s), event logs
-	// on redis pubsub channel
+	// on kafka  channel
 	pubsubWorker := func(txns []*db.PackedTransaction) (*db.PackedBlock, bool) {
 
 		// Constructing block data to published & persisted
@@ -37,7 +37,7 @@ func ProcessBlockContent(client *ethclient.Client, block *types.Block, _db *gorm
 			}
 
 			// 2. Attempting to publish block on Pub/Sub topic
-			if !PublishBlock(packedBlock, redis) {
+			if !PublishBlock(packedBlock, kafkaInfo) {
 				return nil, false
 			}
 
@@ -111,14 +111,7 @@ func ProcessBlockContent(client *ethclient.Client, block *types.Block, _db *gorm
 		func(tx *types.Transaction) {
 			wp.Submit(func() {
 
-				FetchTransactionByHash(client,
-					block,
-					tx,
-					_db,
-					redis,
-					publishable,
-					status,
-					returnValChan)
+				FetchTransactionByHash(client, block, tx, returnValChan)
 
 			})
 		}(v)

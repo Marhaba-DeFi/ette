@@ -2,12 +2,13 @@ package app
 
 import (
 	"context"
-	"log"
-
-	"github.com/go-redis/redis/v8"
-
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/go-redis/redis/v8"
 	cfg "github.com/itzmeanjan/ette/app/config"
+	d "github.com/itzmeanjan/ette/app/data"
+	"github.com/segmentio/kafka-go"
+	"log"
+	"net"
 )
 
 // Connect to blockchain node, either using HTTP or Websocket connection
@@ -27,6 +28,17 @@ func getClient(isRPC bool) *ethclient.Client {
 	}
 
 	return client
+}
+
+func getKafkaClient(hostAddress string, hostPort string) *d.KafkaInfo {
+
+	// Create a new kafka producer
+	return &d.KafkaInfo{
+		KafkaWriter: &kafka.Writer{
+			Addr:     kafka.TCP(net.JoinHostPort(hostAddress, hostPort)),
+			Balancer: &kafka.LeastBytes{},
+		},
+	}
 }
 
 // Creates connection to Redis server & returns that handle to be used for further communication

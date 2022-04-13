@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )
 
@@ -125,11 +125,10 @@ func (s *StatusHolder) SetLatestBlockNumber(num uint64) {
 
 }
 
-// RedisInfo - Holds redis related information in this struct, to be used
-// when passing to functions as argument
-type RedisInfo struct {
-	Client                                               *redis.Client // using this object `ette` will talk to Redis
-	BlockPublishTopic, TxPublishTopic, EventPublishTopic string
+// KafkaInfo - Holds kafka related information in this struct, to be used
+// when passing to function as argument
+type KafkaInfo struct {
+	KafkaWriter *kafka.Writer
 }
 
 // ResultStatus - Keeps track of how many operations went successful
@@ -152,7 +151,7 @@ func (r ResultStatus) Total() uint64 {
 type Job struct {
 	Client *ethclient.Client
 	DB     *gorm.DB
-	Redis  *RedisInfo
+	Kafka  *KafkaInfo
 	Block  uint64
 	Status *StatusHolder
 }

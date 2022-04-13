@@ -21,7 +21,7 @@ import (
 func Run(configFile, subscriptionPlansFile string) {
 
 	ctx, cancel := context.WithCancel(context.Background())
-	_connection, _redisClient, _redisInfo, _db, _status, _queue := bootstrap(configFile, subscriptionPlansFile)
+	_connection, _redisClient, _kafkaInfo, _db, _status, _queue := bootstrap(configFile, subscriptionPlansFile)
 
 	// Attempting to listen to Ctrl+C signal
 	// and when received gracefully shutting down `ette`
@@ -49,13 +49,13 @@ func Run(configFile, subscriptionPlansFile string) {
 			return
 		}
 
-		if err := sql.Close(); err != nil {
-			log.Print(color.Red.Sprintf("[!] Failed to close underlying DB connection : %s", err.Error()))
+		if sqlCloseErr := sql.Close(); sqlCloseErr != nil {
+			log.Print(color.Red.Sprintf("[!] Failed to close underlying DB connection : %s", sqlCloseErr.Error()))
 			return
 		}
 
-		if err := _redisInfo.Client.Close(); err != nil {
-			log.Print(color.Red.Sprintf("[!] Failed to close connection to Redis : %s", err.Error()))
+		if kafkaCloseErr := _kafkaInfo.KafkaWriter.Close(); kafkaCloseErr != nil {
+			log.Print(color.Red.Sprintf("[!] Failed to close connection to Kafka : %s", kafkaCloseErr.Error()))
 			return
 		}
 
@@ -113,7 +113,7 @@ func Run(configFile, subscriptionPlansFile string) {
 	go _queue.Start(ctx)
 
 	// Pushing block header propagation listener to another thread of execution
-	go blk.SubscribeToNewBlocks(_connection, _db, _status, _redisInfo, _queue)
+	go blk.SubscribeToNewBlocks(_connection, _db, _status, _kafkaInfo, _queue)
 
 	// Periodic clean up job being started, to be run every 24 hours to clean up
 	// delivery history data, older than 24 hours

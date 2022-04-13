@@ -2,10 +2,10 @@ package app
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"log"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
 	cfg "github.com/itzmeanjan/ette/app/config"
 	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
@@ -16,7 +16,7 @@ import (
 
 // Setting ground up i.e. acquiring resources required & determining with
 // some basic checks whether we can proceed to next step or not
-func bootstrap(configFile, subscriptionPlansFile string) (*d.BlockChainNodeConnection, *redis.Client, *d.RedisInfo, *gorm.DB, *d.StatusHolder, *q.BlockProcessorQueue) {
+func bootstrap(configFile, subscriptionPlansFile string) (*d.BlockChainNodeConnection, *redis.Client, *d.KafkaInfo, *gorm.DB, *d.StatusHolder, *q.BlockProcessorQueue) {
 
 	err := cfg.Read(configFile)
 	if err != nil {
@@ -34,13 +34,20 @@ func bootstrap(configFile, subscriptionPlansFile string) (*d.BlockChainNodeConne
 	}
 
 	_redisClient := getRedisClient()
-
 	if _redisClient == nil {
 		log.Fatalf("[!] Failed to connect to Redis Server\n")
 	}
 
 	if err := _redisClient.FlushAll(context.Background()).Err(); err != nil {
 		log.Printf("[!] Failed to flush all keys from redis : %s\n", err.Error())
+	}
+
+	// Maintaining Kafka connection
+	kafkaHostAddress := cfg.Get("KafkaHostAddress")
+	kafkaPort := cfg.Get("KafkaPort")
+	_kafkaInfo := getKafkaClient(kafkaHostAddress, kafkaPort)
+	if _kafkaInfo == nil {
+		log.Fatalf("[!] Failed to connect to Kafka Server\n")
 	}
 
 	_db := db.Connect()
@@ -61,16 +68,9 @@ func bootstrap(configFile, subscriptionPlansFile string) (*d.BlockChainNodeConne
 		Mutex: &sync.RWMutex{},
 	}
 
-	_redisInfo := &d.RedisInfo{
-		Client:            _redisClient,
-		BlockPublishTopic: "block",
-		TxPublishTopic:    "transaction",
-		EventPublishTopic: "event",
-	}
-
 	// This is block processor queue
 	_queue := q.New(db.GetCurrentBlockNumber(_db))
 
-	return _connection, _redisClient, _redisInfo, _db, _status, _queue
+	return _connection, _redisClient, _kafkaInfo, _db, _status, _queue
 
 }
