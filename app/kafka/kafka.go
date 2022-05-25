@@ -1,8 +1,7 @@
 package kafka
 
 import (
-	"fmt"
-
+	cfg "github.com/itzmeanjan/ette/app/config"
 	kafka "github.com/segmentio/kafka-go"
 )
 
@@ -15,8 +14,7 @@ func newKafkaWriter(kafkaURL, topic string) *kafka.Writer {
 }
 
 func Connect() *kafka.Writer {
-	_writer := newKafkaWriter("localhost:29092", "events")
-	fmt.Println("start producing ... !!")
+	_writer := newKafkaWriter(cfg.Get("KAFKA_URL"), cfg.Get("KAFKA_TOPIC"))
 
 	return _writer
 }

@@ -225,9 +225,9 @@ func (e *EventConsumer) Send(msg string) {
 		Value: _event.ToJSON(),
 	})
 	if err != nil {
-		fmt.Println("kafka error", err)
+		fmt.Println("Kafka Write Error:", err)
 	} else {
-		fmt.Println("produced")
+		fmt.Println("Event Sent to Kafka")
 	}
 
 }
