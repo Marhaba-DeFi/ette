@@ -222,6 +222,7 @@ func (e *EventConsumer) Send(msg string) {
 	}
 
 	err = e.KafkaWriter.WriteMessages(context.Background(), kafka.Message{
+		Topic: _event.Origin + "_" + _event.Topics[0],
 		Value: _event.ToJSON(),
 	})
 	if err != nil {
