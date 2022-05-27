@@ -7,8 +7,9 @@ import (
 
 func Connect() *kafka.Writer {
 	_writer := &kafka.Writer{
-		Addr:     kafka.TCP(cfg.Get("KAFKA_URL")),
-		Balancer: &kafka.LeastBytes{},
+		Addr:                   kafka.TCP(cfg.Get("KAFKA_URL")),
+		Balancer:               &kafka.LeastBytes{},
+		AllowAutoTopicCreation: true,
 	}
 
 	return _writer
