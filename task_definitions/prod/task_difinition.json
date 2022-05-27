@@ -1,0 +1,194 @@
+{
+  "taskDefinitionArn": "arn:aws:ecs:us-east-2:693260174422:task-definition/ette:1",
+  "containerDefinitions": [
+    {
+      "name": "kafka",
+      "image": "confluentinc/cp-kafka:latest",
+      "cpu": 0,
+      "links": [],
+      "portMappings": [
+        {
+          "containerPort": 29090,
+          "hostPort": 0,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [],
+      "command": [],
+      "environment": [
+        {
+          "name": "KAFKA_BROKER_ID",
+          "value": "1"
+        },
+        {
+          "name": "KAFKA_ADVERTISED_LISTENERS",
+          "value": "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092"
+        },
+        {
+          "name": "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR",
+          "value": "1"
+        },
+        {
+          "name": "KAFKA_INTER_BROKER_LISTENER_NAME",
+          "value": "PLAINTEXT"
+        },
+        {
+          "name": "KAFKA_ZOOKEEPER_CONNECT",
+          "value": "zookeeper:2181"
+        },
+        {
+          "name": "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
+          "value": "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+        }
+      ],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [],
+      "dnsServers": [],
+      "dnsSearchDomains": [],
+      "extraHosts": [],
+      "dockerSecurityOptions": [],
+      "dockerLabels": {},
+      "ulimits": [],
+      "systemControls": []
+    },
+    {
+      "name": "cache",
+      "image": "redis:6.0.6-alpine",
+      "cpu": 0,
+      "links": [],
+      "portMappings": [
+        {
+          "containerPort": 6378,
+          "hostPort": 0,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [],
+      "command": ["redis-server --save 20 1 --loglevel warning"],
+      "environment": [],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [],
+      "dnsServers": [],
+      "dnsSearchDomains": [],
+      "extraHosts": [],
+      "dockerSecurityOptions": [],
+      "dockerLabels": {},
+      "ulimits": [],
+      "systemControls": []
+    },
+    {
+      "name": "db",
+      "image": "postgres:14.1-alpine",
+      "cpu": 0,
+      "links": [],
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "hostPort": 0,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [],
+      "command": [],
+      "environment": [
+        {
+          "name": "POSTGRES_USER",
+          "value": "ette_db"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "value": "ette_db"
+        }
+      ],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [],
+      "dnsServers": [],
+      "dnsSearchDomains": [],
+      "extraHosts": [],
+      "dockerSecurityOptions": [],
+      "dockerLabels": {},
+      "ulimits": [],
+      "systemControls": []
+    },
+    {
+      "name": "zookeeper",
+      "image": "confluentinc/cp-zookeeper:latest",
+      "cpu": 0,
+      "links": [],
+      "portMappings": [
+        {
+          "containerPort": 22178,
+          "hostPort": 0,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [],
+      "command": [],
+      "environment": [
+        {
+          "name": "ZOOKEEPER_CLIENT_PORT",
+          "value": "2181"
+        },
+        {
+          "name": "ZOOKEEPER_TICK_TIME",
+          "value": "2000"
+        }
+      ],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [],
+      "dnsServers": [],
+      "dnsSearchDomains": [],
+      "extraHosts": [],
+      "dockerSecurityOptions": [],
+      "dockerLabels": {},
+      "ulimits": [],
+      "systemControls": []
+    }
+  ],
+  "family": "ette",
+  "networkMode": "bridge",
+  "revision": 1,
+  "volumes": [],
+  "status": "ACTIVE",
+  "requiresAttributes": [
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    }
+  ],
+  "placementConstraints": [],
+  "compatibilities": ["EXTERNAL", "EC2"],
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "1024",
+  "memory": "3072",
+  "registeredAt": "2022-05-27T08:50:44.948Z",
+  "registeredBy": "arn:aws:iam::693260174422:root",
+  "tags": [
+    {
+      "key": "ecs:taskDefinition:createdFrom",
+      "value": "ecs-console-v2"
+    },
+    {
+      "key": "ecs:taskDefinition:stackId",
+      "value": "arn:aws:cloudformation:us-east-2:693260174422:stack/ECS-Console-V2-TaskDefinition-ba3a893c-5827-404c-9105-8c247d9522e8/1643d8d0-dd9a-11ec-8383-02518b3e9a32"
+    }
+  ]
+}
