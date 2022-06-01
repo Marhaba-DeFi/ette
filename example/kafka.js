@@ -14,7 +14,7 @@ const main = async () => {
 
   await consumer.subscribe({
     topic:
-      "0xB6E3d179E941Ed21627717834C098e3e56006C85_0xa9f73b89ea96c7b79f1e66b0f72cd59b336630ae66fc1d71c477db96779109e5",
+      "0xfB114de60340ec5053fEe1E2782d090EFBEe16B1_0xa9f73b89ea96c7b79f1e66b0f72cd59b336630ae66fc1d71c477db96779109e5",
     fromBeginning: true,
   })
 

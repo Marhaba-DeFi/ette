@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/itzmeanjan/ette/app/data"
-	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
 )
 
@@ -203,7 +202,7 @@ func (b *BlockConsumer) Send(msg string) {
 		db.PutDataDeliveryInfo(b.DB, user.Address, "/v1/ws/block", uint64(len(msg)))
 	}
 
-	_block := &d.Block{
+	_block := &data.Block{
 		Hash:                block.Hash,
 		Number:              block.Number,
 		Time:                block.Time,

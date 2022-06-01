@@ -21,10 +21,10 @@ _client.on("connect", (c) => {
 
   c.send(
     JSON.stringify({
-      name: "event/0xB6E3d179E941Ed21627717834C098e3e56006C85/*/*/*/*",
+      name: "event/0xfB114de60340ec5053fEe1E2782d090EFBEe16B1/*/*/*/*",
       type: "subscribe",
       apiKey:
-        "0x39a3859caa81aa4b881220f09ad870f81675b29dc5b2b4bfb1fcdb2db62a1b2a",
+        "0xb7a81a56fb912fbe618e6af7bbba70cac4ca342a61fc09f6e95e4d0db0e852ad",
     })
   )
 })

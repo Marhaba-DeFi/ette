@@ -99,12 +99,12 @@
       "command": [],
       "environment": [
         {
-          "name": "POSTGRES_USER",
-          "value": "ette_db"
+          "name": "ETTE_POSTGRES_USER",
+          "value": "arn:aws:ssm:eu-west-2:293923300115:parameter/ETTE_POSTGRES_USER"
         },
         {
-          "name": "POSTGRES_PASSWORD",
-          "value": "ette_db"
+          "name": "ETTE_POSTGRES_PASSWORD",
+          "value": "arn:aws:ssm:eu-west-2:293923300115:parameter/ETTE_POSTGRES_PASSWORD"
         }
       ],
       "environmentFiles": [],
