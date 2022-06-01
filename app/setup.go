@@ -16,6 +16,30 @@ import (
 	"gorm.io/gorm"
 )
 
+// Enum implementation of RPC and WS
+// type Connector int64
+
+// const (
+// 	RPC Connector = iota
+// 	RPCUrl_Backup
+// 	Websocket
+// 	WebsocketUrl_Backup
+// )
+
+// func (s Connector) String() int64 {
+// 	switch s {
+// 	case RPC:
+// 		return 0
+// 	case RPCUrl_Backup:
+// 		return 1
+// 	case Websocket:
+// 		return 2
+// 	case WebsocketUrl_Backup:
+// 		return 3
+// 	}
+// 	return 0
+// }
+
 // Setting ground up i.e. acquiring resources required & determining with
 // some basic checks whether we can proceed to next step or not
 func bootstrap(p Params) (*d.BlockChainNodeConnection, *redis.Client, *d.RedisInfo, *gorm.DB, *d.StatusHolder, *q.BlockProcessorQueue, *kafka.Writer) {
@@ -28,14 +52,19 @@ func bootstrap(p Params) (*d.BlockChainNodeConnection, *redis.Client, *d.RedisIn
 	if !(cfg.Get("EtteMode") == "1" || cfg.Get("EtteMode") == "2" || cfg.Get("EtteMode") == "3" || cfg.Get("EtteMode") == "4" || cfg.Get("EtteMode") == "5") {
 		log.Fatalf("[!] Failed to find `EtteMode` in configuration file\n")
 	}
-	var rpc int = 0
+
+	var RPC_connector int = 0
+	var WS_connector int = 2
 	if p.down {
-		rpc = 1
+		RPC_connector = 1
+		WS_connector = 3
+
 	}
+
 	// Maintaining both HTTP & Websocket based connection to blockchain
 	_connection := &d.BlockChainNodeConnection{
-		RPC:       getClient(rpc),
-		Websocket: getClient(2),
+		RPC:       getClient(RPC_connector),
+		Websocket: getClient(WS_connector),
 	}
 	_redisClient := getRedisClient()
 

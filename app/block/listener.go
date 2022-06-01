@@ -52,8 +52,8 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 			if first && !(header.Number.Uint64() > status.MaxBlockNumberAtStartUp()) {
 				log.Print("Moving to backup RPC ❗️🔆❗️🔆❗️🔆❗️ ")
 				rpc_down <- true
+				log.Printf("❗️ Bad block received : expected > `%d`\n", status.MaxBlockNumberAtStartUp())
 				return
-				// log.Fatalf("❗️ Bad block received : expected > `%d`\n", status.MaxBlockNumberAtStartUp())
 
 			}
 
@@ -68,8 +68,8 @@ func SubscribeToNewBlocks(connection *d.BlockChainNodeConnection, _db *gorm.DB, 
 			if !first && header.Number.Uint64() > status.GetLatestBlockNumber()+1 {
 				log.Print("Moving to backup RPC ❗️🔆❗️🔆❗️🔆❗️ ")
 				rpc_down <- true
+				log.Printf("❗️ Bad block received %d, expected %d\n", header.Number.Uint64(), status.GetLatestBlockNumber())
 				return
-				// log.Fatalf("❗️ Bad block received %d, expected %d\n", header.Number.Uint64(), status.GetLatestBlockNumber())
 
 			}
 

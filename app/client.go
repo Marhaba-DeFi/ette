@@ -20,8 +20,10 @@ func getClient(isRPC int) *ethclient.Client {
 		client, err = ethclient.Dial(cfg.Get("RPCUrl"))
 	} else if isRPC == 1 {
 		client, err = ethclient.Dial(cfg.Get("RPCUrl_Backup"))
-	} else {
+	} else if isRPC == 2 {
 		client, err = ethclient.Dial(cfg.Get("WebsocketUrl"))
+	} else if isRPC == 3 {
+		client, err = ethclient.Dial(cfg.Get("WebsocketUrl_Backup"))
 	}
 
 	if err != nil {
