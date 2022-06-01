@@ -12,14 +12,18 @@ import (
 
 // Connect to blockchain node, either using HTTP or Websocket connection
 // depending upon true/ false, passed to function, respectively
-func getClient(isRPC bool) *ethclient.Client {
+func getClient(isRPC int) *ethclient.Client {
 	var client *ethclient.Client
 	var err error
 
-	if isRPC {
+	if isRPC == 0 {
 		client, err = ethclient.Dial(cfg.Get("RPCUrl"))
-	} else {
+	} else if isRPC == 1 {
+		client, err = ethclient.Dial(cfg.Get("RPCUrl_Backup"))
+	} else if isRPC == 2 {
 		client, err = ethclient.Dial(cfg.Get("WebsocketUrl"))
+	} else if isRPC == 3 {
+		client, err = ethclient.Dial(cfg.Get("WebsocketUrl_Backup"))
 	}
 
 	if err != nil {
