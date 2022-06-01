@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/itzmeanjan/ette/app/data"
 	d "github.com/itzmeanjan/ette/app/data"
 	"github.com/itzmeanjan/ette/app/db"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )
 
@@ -22,14 +24,15 @@ import (
 //
 // If yes, also deliver data to client application, connected over websocket
 type TransactionConsumer struct {
-	Client     *redis.Client
-	Requests   map[string]*SubscriptionRequest
-	Connection *websocket.Conn
-	PubSub     *redis.PubSub
-	DB         *gorm.DB
-	ConnLock   *sync.Mutex
-	TopicLock  *sync.RWMutex
-	Counter    *data.SendReceiveCounter
+	Client      *redis.Client
+	Requests    map[string]*SubscriptionRequest
+	Connection  *websocket.Conn
+	PubSub      *redis.PubSub
+	DB          *gorm.DB
+	ConnLock    *sync.Mutex
+	TopicLock   *sync.RWMutex
+	Counter     *data.SendReceiveCounter
+	KafkaWriter *kafka.Writer
 }
 
 // Subscribe - Subscribe to `transaction` topic, under which all transaction related data to be published
@@ -235,6 +238,16 @@ func (t *TransactionConsumer) Send(msg string) {
 
 	if t.SendData(&transaction) {
 		db.PutDataDeliveryInfo(t.DB, user.Address, "/v1/ws/transaction", uint64(len(msg)))
+	}
+
+	err = t.KafkaWriter.WriteMessages(context.Background(), kafka.Message{
+		Topic: tx.Hash,
+		Value: tx.ToJSON(),
+	})
+	if err != nil {
+		fmt.Println("Kafka Transaction Write Error:", err)
+	} else {
+		fmt.Println("Transaction Sent to Kafka")
 	}
 
 }

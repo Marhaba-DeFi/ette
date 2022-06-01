@@ -40,11 +40,10 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   parity:
-    image: openethereum/openethereum:latest
-    command: --config dev --unsafe-expose --jsonrpc-cors all
+    image: ethereum/client-go:stable
+    command: geth --dev
     ports:
       - 8545:8545
       - 8546:8546
       - 30303:30303
-    tty: true
 

@@ -22,15 +22,16 @@ type Consumer interface {
 // NewBlockConsumer - Creating one new block data consumer, which will subscribe to block
 // topic & listen for data being published on this channel, which will eventually be
 // delivered to client application over websocket connection
-func NewBlockConsumer(client *redis.Client, requests map[string]*SubscriptionRequest, conn *websocket.Conn, db *gorm.DB, connLock *sync.Mutex, topicLock *sync.RWMutex, counter *data.SendReceiveCounter) *BlockConsumer {
+func NewBlockConsumer(client *redis.Client, requests map[string]*SubscriptionRequest, conn *websocket.Conn, db *gorm.DB, connLock *sync.Mutex, topicLock *sync.RWMutex, counter *data.SendReceiveCounter, _kafkaWriter *kafka.Writer) *BlockConsumer {
 	consumer := BlockConsumer{
-		Client:     client,
-		Requests:   requests,
-		Connection: conn,
-		DB:         db,
-		ConnLock:   connLock,
-		TopicLock:  topicLock,
-		Counter:    counter,
+		Client:      client,
+		Requests:    requests,
+		Connection:  conn,
+		DB:          db,
+		ConnLock:    connLock,
+		TopicLock:   topicLock,
+		Counter:     counter,
+		KafkaWriter: _kafkaWriter,
 	}
 
 	consumer.Subscribe()
@@ -43,15 +44,16 @@ func NewBlockConsumer(client *redis.Client, requests map[string]*SubscriptionReq
 // topic & listen for data being published on this channel & check whether received data
 // is what, client is interested in or not, which will eventually be
 // delivered to client application over websocket connection
-func NewTransactionConsumer(client *redis.Client, requests map[string]*SubscriptionRequest, conn *websocket.Conn, db *gorm.DB, connLock *sync.Mutex, topicLock *sync.RWMutex, counter *data.SendReceiveCounter) *TransactionConsumer {
+func NewTransactionConsumer(client *redis.Client, requests map[string]*SubscriptionRequest, conn *websocket.Conn, db *gorm.DB, connLock *sync.Mutex, topicLock *sync.RWMutex, counter *data.SendReceiveCounter, _kafkaWriter *kafka.Writer) *TransactionConsumer {
 	consumer := TransactionConsumer{
-		Client:     client,
-		Requests:   requests,
-		Connection: conn,
-		DB:         db,
-		ConnLock:   connLock,
-		TopicLock:  topicLock,
-		Counter:    counter,
+		Client:      client,
+		Requests:    requests,
+		Connection:  conn,
+		DB:          db,
+		ConnLock:    connLock,
+		TopicLock:   topicLock,
+		Counter:     counter,
+		KafkaWriter: _kafkaWriter,
 	}
 
 	consumer.Subscribe()
