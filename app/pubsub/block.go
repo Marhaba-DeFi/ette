@@ -3,12 +3,14 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/itzmeanjan/ette/app/data"
@@ -18,14 +20,15 @@ import (
 // BlockConsumer - To be subscribed to `block` topic using this consumer handle
 // and client connected using websocket needs to be delivered this piece of data
 type BlockConsumer struct {
-	Client     *redis.Client
-	Requests   map[string]*SubscriptionRequest
-	Connection *websocket.Conn
-	PubSub     *redis.PubSub
-	DB         *gorm.DB
-	ConnLock   *sync.Mutex
-	TopicLock  *sync.RWMutex
-	Counter    *data.SendReceiveCounter
+	Client      *redis.Client
+	Requests    map[string]*SubscriptionRequest
+	Connection  *websocket.Conn
+	PubSub      *redis.PubSub
+	DB          *gorm.DB
+	ConnLock    *sync.Mutex
+	TopicLock   *sync.RWMutex
+	Counter     *data.SendReceiveCounter
+	KafkaWriter *kafka.Writer
 }
 
 // Subscribe - Subscribe to `block` channel
@@ -197,6 +200,33 @@ func (b *BlockConsumer) Send(msg string) {
 
 	if b.SendData(&block) {
 		db.PutDataDeliveryInfo(b.DB, user.Address, "/v1/ws/block", uint64(len(msg)))
+	}
+
+	_block := &data.Block{
+		Hash:                block.Hash,
+		Number:              block.Number,
+		Time:                block.Time,
+		ParentHash:          block.ParentHash,
+		Difficulty:          block.Difficulty,
+		GasUsed:             block.GasUsed,
+		GasLimit:            block.GasLimit,
+		Nonce:               block.Nonce,
+		Miner:               block.Miner,
+		Size:                block.Size,
+		StateRootHash:       block.StateRootHash,
+		UncleHash:           block.UncleHash,
+		TransactionRootHash: block.TransactionRootHash,
+		ReceiptRootHash:     block.ReceiptRootHash,
+	}
+
+	err = b.KafkaWriter.WriteMessages(context.Background(), kafka.Message{
+		Topic: _block.Hash,
+		Value: _block.ToJSON(),
+	})
+	if err != nil {
+		fmt.Println("Kafka Block Write Error:", err)
+	} else {
+		fmt.Println("Block Sent to Kafka")
 	}
 
 }

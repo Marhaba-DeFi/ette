@@ -222,12 +222,13 @@ func (e *EventConsumer) Send(msg string) {
 	}
 
 	err = e.KafkaWriter.WriteMessages(context.Background(), kafka.Message{
+		Topic: _event.Origin + "_" + _event.Topics[0],
 		Value: _event.ToJSON(),
 	})
 	if err != nil {
-		fmt.Println("kafka error", err)
+		fmt.Println("Kafka Event Write Error:", err)
 	} else {
-		fmt.Println("produced")
+		fmt.Println("Event Sent to Kafka")
 	}
 
 }
